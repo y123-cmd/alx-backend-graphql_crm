@@ -1,5 +1,6 @@
-django-crontab
-requests
-django>=4.2,<5
-graphene-django
-django-filter
+Django>=4.2,<5.0
+graphene-django>=3.0.0
+django-filter>=23.0
+django-crontab>=0.7
+gql[requests]>=3.5.0
+
