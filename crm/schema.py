@@ -157,12 +157,21 @@
 #     create_order = CreateOrder.Field()
 import graphene
 from graphene_django.types import DjangoObjectType
-from .models import Customer
+from .models import Customer, Product, Order
 
 
 class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
+class ProductType(DjangoObjectType):
+    class Meta:
+        model = Product
+        fields = ("id", "name", "price", "stock")
+
+class OrderType(DjangoObjectType):
+    class Meta:
+        model = Order
+        fields = ("id", "order_date", "customer", "products", "total_amount")
 
 
 # ---------------- Queries ----------------
@@ -234,3 +243,17 @@ class Mutation(graphene.ObjectType):
     create_customer = CreateCustomer.Field()
     update_customer = UpdateCustomer.Field()
     delete_customer = DeleteCustomer.Field()
+class Query(graphene.ObjectType):
+    customers = graphene.List(CustomerType)
+    products = graphene.List(ProductType)
+    orders = graphene.List(OrderType)
+
+    def resolve_customers(root, info, **kwargs):
+        return Customer.objects.all()
+
+    def resolve_products(root, info, **kwargs):
+        return Product.objects.all()
+
+    def resolve_orders(root, info, **kwargs):
+        return Order.objects.all()
+schema = graphene.Schema(query=Query, mutation=Mutation)
