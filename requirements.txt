@@ -1,2 +1,5 @@
 django-crontab
 requests
+django>=4.2,<5
+graphene-django
+django-filter
