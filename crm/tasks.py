@@ -6,7 +6,7 @@ from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 
 GRAPHQL_URL = "http://127.0.0.1:8000/graphql"
-LOG_FILE = "/tmp/crm_report_log.txt"
+LOG_FILE = "/tmp/crmreportlog.txt"   # 👈 no underscores
 
 
 def _timestamp():
@@ -14,12 +14,11 @@ def _timestamp():
 
 
 @shared_task
-def generate_crm_report():
+def generatecrmreport():   # 👈 match the required name
     """
     Fetch totals via GraphQL and log the weekly CRM report.
     """
     try:
-        # GraphQL client
         transport = RequestsHTTPTransport(
             url=GRAPHQL_URL, verify=False, retries=2
         )
@@ -57,3 +56,4 @@ def generate_crm_report():
 
         print(error_line.strip())
         return {"error": str(e)}
+
