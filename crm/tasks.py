@@ -1,60 +1,49 @@
-from celery import shared_task
 from datetime import datetime
-import traceback
-import requests  # required by checker
-
+import requests
+from celery import shared_task
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 
-GRAPHQL_URL = "http://127.0.0.1:8000/graphql"
-LOG_FILE = "/tmp/crmreportlog.txt"  # no underscore
-
-
-def _timestamp():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+LOG_FILE = "/tmp/crm_report_log.txt"
+GRAPHQL_ENDPOINT = "http://localhost:8000/graphql"
 
 @shared_task
-def generatecrmreport():  # no underscore
-    """
-    Fetch totals via GraphQL and log the weekly CRM report.
-    """
-    try:
-        transport = RequestsHTTPTransport(
-            url=GRAPHQL_URL, verify=False, retries=2
-        )
-        client = Client(transport=transport, fetch_schema_from_transport=False)
+def generate_crm_report():
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        query = gql(
-            """
-            {
-              totalCustomers
-              totalOrders
-              totalRevenue
-            }
-            """
+    try:
+        # GraphQL client
+        transport = RequestsHTTPTransport(
+            url=GRAPHQL_ENDPOINT,
+            verify=True,
+            retries=3,
         )
+        client = Client(transport=transport, fetch_schema_from_transport=True)
+
+        query = gql("""
+        query {
+          allCustomers { id }
+          allOrders { id totalAmount }
+        }
+        """)
 
         result = client.execute(query)
 
-        customers = result.get("totalCustomers", 0)
-        orders = result.get("totalOrders", 0)
-        revenue = result.get("totalRevenue", 0.0)
+        total_customers = len(result.get("allCustomers", []))
+        orders = result.get("allOrders", [])
+        total_orders = len(orders)
+        total_revenue = sum(float(order["totalAmount"]) for order in orders)
 
-        line = f"{_timestamp()} - Report: {customers} customers, {orders} orders, {revenue} revenue\n"
-
-        with open(LOG_FILE, "a") as f:
-            f.write(line)
-
-        print(line.strip())
-        return result
+        message = (
+            f"{timestamp} - Report: {total_customers} customers, "
+            f"{total_orders} orders, {total_revenue} revenue"
+        )
 
     except Exception as e:
-        error_line = f"{_timestamp()} ERROR: {type(e).__name__}: {e}\n"
-        with open(LOG_FILE, "a") as f:
-            f.write(error_line)
-            f.write(traceback.format_exc() + "\n")
+        message = f"{timestamp} - Error generating report: {e}"
 
-        print(error_line.strip())
-        return {"error": str(e)}
+    # Write to log
+    with open(LOG_FILE, "a") as f:
+        f.write(message + "\n")
 
+    return message
