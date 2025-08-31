@@ -1,13 +1,13 @@
 from celery import shared_task
 from datetime import datetime
 import traceback
-import requests   # required by checker
+import requests  # required by checker
 
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 
 GRAPHQL_URL = "http://127.0.0.1:8000/graphql"
-LOG_FILE = "/tmp/crmreportlog.txt"   # no underscores, matches checker
+LOG_FILE = "/tmp/crmreportlog.txt"  # no underscore
 
 
 def _timestamp():
@@ -15,7 +15,7 @@ def _timestamp():
 
 
 @shared_task
-def generatecrmreport():   # no underscores, matches checker
+def generatecrmreport():  # no underscore
     """
     Fetch totals via GraphQL and log the weekly CRM report.
     """
